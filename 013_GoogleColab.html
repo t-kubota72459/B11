@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Colab 超入門</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            /* Colabをイメージしたカラーパレット */
+            --colab-orange: #f9ab00;
+            --colab-dark: #202124;
+            --colab-gray: #5f6368;
+            --bg-light: #f8f9fa;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+            --accent-blue: #1a73e8;
+            --accent-red: #ea4335;
+            --border-color: #dadce0;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background-color: #333;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #presentation-wrapper {
+            width: 1280px;
+            height: 720px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            overflow: hidden;
+            background-color: var(--bg-light);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+        }
+
+        #slide-track {
+            display: flex;
+            width: 1000%; /* 10 Slides */
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide {
+            width: calc(100% / 10);
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Title Slide Layout */
+        .title-slide {
+            background: var(--colab-dark);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .title-slide::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(249,171,0,0.1) 0%, transparent 60%);
+            z-index: 0;
+        }
+        .title-slide > * { position: relative; z-index: 1; }
+        .title-slide h1 { font-size: 80px; margin: 0; font-weight: 900; line-height: 1.2; }
+        .title-slide p { font-size: 32px; margin-top: 20px; color: var(--colab-orange); font-weight: bold; }
+
+        /* General Layouts */
+        .header {
+            background: white;
+            color: var(--colab-dark);
+            padding: 25px 60px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #e8eaed;
+        }
+        .header i { font-size: 40px; color: var(--colab-orange); }
+        .header h2 { margin: 0; font-size: 40px; font-weight: 900; }
+
+        .content {
+            flex: 1;
+            padding: 40px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+            height: 100%;
+        }
+
+        /* UI Elements (Lists) */
+        .bullet-list { list-style: none; padding: 0; margin: 0; }
+        .bullet-list li { font-size: 26px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; color: var(--text-dark); }
+        .bullet-list li > div:first-child { flex-shrink: 0; width: 40px; display: flex; justify-content: center; margin-top: 5px;}
+        .bullet-list i { color: var(--accent-blue); font-size: 28px; margin-top: 0; }
+
+        pre {
+            background: var(--colab-dark); color: #f8fafc; padding: 25px; border-radius: 12px;
+            font-family: 'Fira Code', monospace; font-size: 24px; line-height: 1.5;
+            border-left: 8px solid var(--colab-orange); box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin: 0;
+        }
+
+        .highlight-box {
+            background: white;
+            border: 3px solid var(--colab-orange);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        /* =========================================
+           Visual UI Mockups (Browser & Colab Cells)
+        ========================================= */
+        .browser-mockup {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(32, 33, 36, 0.15);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .browser-header {
+            background: #e8eaed; padding: 12px 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color);
+        }
+        .browser-dot { width: 12px; height: 12px; border-radius: 50%; background: #bdc1c6; }
+        .browser-dot.r { background: #ff5f56; }
+        .browser-dot.y { background: #ffbd2e; }
+        .browser-dot.g { background: #27c93f; }
+        .browser-search {
+            background: #fff; border-radius: 20px; padding: 6px 15px; flex: 1; margin-left: 10px;
+            font-size: 14px; color: #5f6368; display:flex; align-items: center; gap: 8px;
+        }
+        
+        .colab-logo { width: 24px; height: 24px; background: #f9ab00; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .colab-nav { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: #fff; }
+        .colab-title { font-size: 18px; font-weight: 500; color: #202124; }
+        
+        .colab-cell-container { padding: 25px; background: #fff; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .colab-cell { display: flex; background: #f8f9fa; border: 1px solid #dadce0; border-radius: 8px; margin-bottom: 15px; overflow: hidden;}
+        .colab-cell-action { width: 50px; display: flex; justify-content: center; padding-top: 15px; background: #fff; border-right: 1px solid #dadce0; }
+        .colab-cell-action i { font-size: 18px; color: #5f6368; }
+        .colab-cell-action i.run-highlight { color: #1a73e8; filter: drop-shadow(0 0 8px rgba(26,115,232,0.6)); font-size: 22px; }
+        .colab-cell-code { flex: 1; padding: 15px; font-family: 'Fira Code', monospace; font-size: 18px; color: #202124; line-height: 1.5; }
+        
+        .colab-output {
+            margin-top: -16px; margin-bottom: 15px; padding: 15px 15px 15px 65px; 
+            font-family: 'Fira Code', monospace; font-size: 16px; color: #202124; 
+            display: flex; align-items: center; gap: 10px;
+            background: #fff; border: 1px solid #dadce0; border-top: none; border-radius: 0 0 8px 8px;
+        }
+        
+        .colab-text-cell { padding: 5px 20px 5px 65px; margin-bottom: 15px; }
+        .colab-text-cell h3 { font-size: 20px; margin-bottom: 5px; color: var(--text-dark); border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        .colab-text-cell p { font-size: 16px; color: var(--text-muted); margin: 0; }
+
+        .search-results { padding: 30px; background: #fff; flex: 1;}
+        .search-result-item { margin-bottom: 25px; }
+        .search-url { font-size: 14px; color: #202124; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;}
+        .search-title { font-size: 22px; color: #1a0dab; margin-bottom: 10px; text-decoration: underline;}
+        .search-desc { font-size: 16px; color: #4d5156; line-height: 1.5;}
+        .btn-primary { background: #1a73e8; color: white; padding: 10px 24px; border-radius: 4px; font-size: 16px; font-weight: bold; display: inline-block; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+
+
+        /* Controls */
+        .slide-page-number {
+            position: absolute;
+            bottom: 80px; 
+            right: 40px;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--colab-gray);
+            opacity: 0.5;
+            z-index: 10;
+            font-family: 'Fira Code', monospace;
+        }
+        .title-slide .slide-page-number { color: white; opacity: 0.4; }
+
+        #controls {
+            position: absolute; bottom: 0; width: 100%; height: 60px; background: rgba(255,255,255,0.95);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-top: 1px solid #e8eaed; z-index: 100;
+        }
+        .nav-btn { background: none; border: none; color: var(--colab-dark); font-size: 20px; cursor: pointer; font-weight: bold; padding: 10px 20px; border-radius: 8px; transition: 0.2s;}
+        .nav-btn:hover { background: #f1f3f4; }
+        .nav-dots { display: flex; gap: 10px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: #dadce0; cursor: pointer; transition: 0.3s; }
+        .dot.active { background: var(--colab-orange); width: 30px; border-radius: 8px; }
+
+        /* =========================================
+           PRINT SETTINGS (PDF全ページ出力用)
+        ========================================= */
+        @media print {
+            @page { size: 1280px 720px landscape; margin: 0; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { width: 100% !important; height: auto !important; overflow: visible !important; background-color: #ffffff !important; display: block !important; margin: 0 !important; padding: 0 !important; }
+            #presentation-wrapper { width: 100% !important; height: auto !important; overflow: visible !important; display: block !important; transform: none !important; box-shadow: none !important; position: static !important; }
+            #slide-track { width: 100% !important; height: auto !important; display: block !important; transform: none !important; transition: none !important; position: static !important; }
+            .slide { width: 1280px !important; height: 720px !important; display: flex !important; position: relative !important; page-break-after: always !important; break-after: page !important; page-break-inside: avoid !important; transform: none !important; opacity: 1 !important; visibility: visible !important; margin: 0 !important; border: none !important; }
+            #controls { display: none !important; }
+            .slide-page-number { bottom: 30px !important; opacity: 0.8 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="presentation-wrapper">
+    <div id="slide-track">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide">
+            <i class="fa-brands fa-google" style="font-size: 100px; margin-bottom: 20px; color: var(--colab-orange);"></i>
+            <h1>Google Colaboratory<br>超入門</h1>
+            <p>ブラウザで動く「魔法のPythonノート」</p>
+        </div>
+
+        <!-- Slide 2: What is Colab (UI Fixed) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-circle-question"></i><h2>Google Colab とは？</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <p style="font-size: 26px; margin-bottom: 20px;">正式名称は「Google Colaboratory（コラボラトリー）」。</p>
+                        <ul class="bullet-list">
+                            <li><div><i class="fa-solid fa-check"></i></div><div>Googleが提供する<strong>無料</strong>のサービス。</div></li>
+                            <li><div><i class="fa-solid fa-check"></i></div><div>ブラウザ（Chromeなど）を開くだけで、本格的なプログラミング（Python）ができる。</div></li>
+                            <li><div><i class="fa-solid fa-check"></i></div><div>自分のパソコンの性能は関係なし！計算はGoogleのスーパーコンピュータがやってくれる。</div></li>
+                        </ul>
+                    </div>
+                    <div class="browser-mockup" style="height: 100%;">
+                        <div class="browser-header">
+                            <div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div>
+                            <div class="browser-search"><i class="fa-solid fa-lock"></i> colab.research.google.com</div>
+                        </div>
+                        <div class="colab-nav">
+                            <div class="colab-logo"><i class="fa-solid fa-infinity" style="color:white; font-size:12px;"></i></div>
+                            <span class="colab-title">Untitled0.ipynb</span>
+                        </div>
+                        <div class="colab-cell-container">
+                            <div class="colab-text-cell" style="padding-left: 20px;">
+                                <h3 style="border:none;">初めてのプログラミング</h3>
+                            </div>
+                            <div class="colab-cell">
+                                <div class="colab-cell-action"><i class="fa-solid fa-play"></i></div>
+                                <div class="colab-cell-code">
+                                    <span style="color:#a626a4;">import</span> numpy <span style="color:#a626a4;">as</span> np<br>
+                                    <span style="color:#a626a4;">print</span>(<span style="color:#50a14f;">"Googleの強力なサーバーで実行中！"</span>)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: The Biggest Advantage (Text Size Fixed) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-star"></i><h2>最大のメリット：「環境構築」が不要！</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div class="highlight-box" style="border-color: var(--colab-gray);">
+                        <h3 style="color: var(--colab-gray); margin-top: 0; font-size: 32px; margin-bottom: 20px;">😭 従来のプログラミング</h3>
+                        <p style="font-size: 26px; line-height: 1.8; color: var(--text-dark);">
+                            「Pythonをインストールして…」<br>
+                            「環境変数を設定して…」<br>
+                            「エディタを入れて…」<br><br>
+                            <strong style="color: var(--accent-red);">→ コードを書く前に心が折れる（挫折率No.1）</strong>
+                        </p>
+                    </div>
+                    <div class="highlight-box">
+                        <h3 style="color: var(--colab-orange); margin-top: 0; font-size: 32px; margin-bottom: 20px;">😍 Google Colab</h3>
+                        <p style="font-size: 26px; line-height: 1.8; color: var(--text-dark);">
+                            Googleアカウントでログインする。<br>
+                            <strong>以上！</strong><br><br><br>
+                            <strong style="color: var(--accent-blue);">→ 5秒後にはプログラムを書き始められる！</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: How to start (Layout Fixed & UI Mockup Added) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-1"></i><h2>使い方①：アクセスして新規作成</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <ul class="bullet-list">
+                            <li><div><i class="fa-solid fa-magnifying-glass"></i></div><div>Googleで「<strong>Google Colab</strong>」と検索。</div></li>
+                            <li><div><i class="fa-solid fa-arrow-pointer"></i></div><div>最初のページ（検索結果）を開く。</div></li>
+                            <li><div><i class="fa-solid fa-file-circle-plus"></i></div><div>画面の「<strong>ノートブックを新規作成</strong>」をクリック。</div></li>
+                        </ul>
+                        <p style="font-size: 20px; color: var(--text-muted); margin-top: 30px; background: #e8eaed; padding: 15px; border-radius: 8px;">
+                            ※学校や個人の「Googleアカウント」でログインしている必要があります。
+                        </p>
+                    </div>
+                    
+                    <div class="browser-mockup" style="height: 100%;">
+                        <div class="browser-header">
+                            <div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div>
+                            <div class="browser-search"><i class="fa-brands fa-google"></i> Google Colab</div>
+                        </div>
+                        <div class="search-results">
+                            <div class="search-result-item">
+                                <div class="search-url">
+                                    <div class="colab-logo" style="width:16px;height:16px;"><i class="fa-solid fa-infinity" style="color:white; font-size:8px;"></i></div> 
+                                    colab.research.google.com
+                                </div>
+                                <div class="search-title">Google Colaboratory</div>
+                                <div class="search-desc">Colaboratory（略称: Colab）は、ブラウザから Python を記述、実行できるサービスです。環境構築が不要で...</div>
+                                <div class="btn-primary">ノートブックを新規作成</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: The Cell Concept (UI Mockup Added) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-2"></i><h2>使い方②：枠（セル）にコードを書く</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <p style="font-size: 26px; margin-bottom: 20px;">Colabの画面には、横長の「枠」があります。<br>これを<strong>セル（Cell）</strong>と呼びます。</p>
+                        <p style="font-size: 26px;">この枠の中に、Pythonの命令文を書きます。</p>
+                    </div>
+                    
+                    <div class="browser-mockup" style="height: auto; border: 2px solid var(--accent-blue); box-shadow: 0 10px 30px rgba(26,115,232,0.2);">
+                        <div class="colab-cell-container">
+                            <div style="font-size: 18px; color: var(--text-muted); margin-bottom: 10px; font-weight: bold;">↓ プログラムを書くための「枠」＝ セル</div>
+                            <div class="colab-cell" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                                <div class="colab-cell-action" style="padding-top: 20px;"><i class="fa-solid fa-play" style="font-size: 24px;"></i></div>
+                                <div class="colab-cell-code" style="font-size: 22px; padding: 20px;">
+                                    <span style="color:#a626a4;">print</span>(<span style="color:#50a14f;">"Hello, World!"</span>)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Execution (Layout Fixed & UI Mockup Added) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-3"></i><h2>使い方③：再生ボタンで実行！</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <ul class="bullet-list">
+                            <li><div><i class="fa-solid fa-play" style="color: #5f6368;"></i></div><div>セルの左側にある<strong>再生ボタン</strong>を押す。（または <code>Shift + Enter</code>）</div></li>
+                            <li><div><i class="fa-solid fa-bolt" style="color: var(--colab-orange);"></i></div><div>その枠のプログラムだけが動く。</div></li>
+                            <li><div><i class="fa-solid fa-eye"></i></div><div>結果はすぐ下に出現！</div></li>
+                        </ul>
+                        <p style="font-size: 22px; margin-top: 30px;">失敗しても、何度でも書き直して再生ボタンを押すだけです。</p>
+                    </div>
+                    
+                    <div class="browser-mockup" style="height: auto;">
+                        <div class="colab-cell-container">
+                            <div class="colab-cell" style="margin-bottom: 0; border-bottom: none; border-radius: 8px 8px 0 0;">
+                                <div class="colab-cell-action" style="padding-top: 20px;"><i class="fa-solid fa-play run-highlight"></i></div>
+                                <div class="colab-cell-code" style="font-size: 22px; padding: 20px;">
+                                    <span style="color:#e06c75;">a</span> = <span style="color:#d19a66;">10</span><br>
+                                    <span style="color:#e06c75;">b</span> = <span style="color:#d19a66;">20</span><br>
+                                    <span style="color:#a626a4;">print</span>(a + b)
+                                </div>
+                            </div>
+                            <div class="colab-output">
+                                <i class="fa-solid fa-arrow-right-to-bracket" style="color: #1a73e8; font-size: 20px;"></i> 
+                                <span style="font-size: 24px; font-weight: bold; color: #202124;">30</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Text and Code together (Layout Fixed & UI Mockup Added) -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-4"></i><h2>使い方④：テキスト（メモ）も書ける</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <p style="font-size: 24px; margin-bottom: 20px;">Colabには「コード」を書く枠と、「テキスト」を書く枠の2種類があります。</p>
+                        <ul class="bullet-list">
+                            <li><div><i class="fa-solid fa-font"></i></div><div><strong>テキストセル:</strong> 実験の目的、考察、メモをきれいに書ける。</div></li>
+                            <li><div><i class="fa-solid fa-code"></i></div><div><strong>コードセル:</strong> 実際の計算や処理。</div></li>
+                        </ul>
+                        <p style="font-size: 22px; font-weight: bold; color: var(--accent-red); margin-top: 30px;">プログラムと実験ノートを「1つのファイル」にまとめられるのが最強！</p>
+                    </div>
+                    
+                    <div class="browser-mockup" style="height: 100%;">
+                        <div class="colab-cell-container">
+                            <!-- Text Cell -->
+                            <div class="colab-text-cell">
+                                <h3>実験1：データの可視化</h3>
+                                <p>収集したデータをグラフにして確認します。以下のコードを実行してください。</p>
+                            </div>
+                            <!-- Code Cell -->
+                            <div class="colab-cell" style="margin-bottom: 0; border-bottom: none; border-radius: 8px 8px 0 0;">
+                                <div class="colab-cell-action"><i class="fa-solid fa-play"></i></div>
+                                <div class="colab-cell-code">
+                                    <span style="color:#a626a4;">import</span> matplotlib.pyplot <span style="color:#a626a4;">as</span> plt<br>
+                                    plt.<span style="color:#61afef;">plot</span>([<span style="color:#d19a66;">1</span>, <span style="color:#d19a66;">2</span>, <span style="color:#d19a66;">3</span>], [<span style="color:#d19a66;">4</span>, <span style="color:#d19a66;">5</span>, <span style="color:#d19a66;">6</span>])
+                                </div>
+                            </div>
+                            <!-- Output -->
+                            <div class="colab-output">
+                                <div style="width: 250px; height: 140px; background: white; border: 1px solid #ccc; display: flex; align-items: flex-end; padding: 15px; position: relative;">
+                                    <div style="width: 2px; height: 110px; background: #333;"></div>
+                                    <div style="width: 200px; height: 2px; background: #333; position: absolute; bottom: 15px; left: 15px;"></div>
+                                    <svg width="200" height="110" style="position: absolute; bottom: 15px; left: 15px; overflow: visible;">
+                                        <polyline points="0,110 100,55 200,0" fill="none" stroke="#1a73e8" stroke-width="4"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: For Math Haters -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-calculator"></i><h2>数学が苦手？ だからこそColab！</h2></div>
+            <div class="content">
+                <div class="two-col">
+                    <div class="highlight-box" style="border-color: var(--accent-blue);">
+                        <h3 style="color: var(--accent-blue); margin-top: 0; font-size: 28px;">全自動 計算＆グラフ機</h3>
+                        <p style="font-size: 22px; line-height: 1.6;">
+                            面倒な計算や、ややこしい数式を自分で解く必要はありません。<br><br>
+                            「このデータでグラフを描いて」「平均値と分散を出して」とPythonにお願いするだけ。<br>
+                            <strong>数学は苦手でも、"計算ツール" を使いこなせればOKです！</strong>
+                        </p>
+                    </div>
+                    <div>
+                        <pre><span class="comment"># データを渡すだけでグラフになる！</span>
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="comment"># 実験データ</span>
+x = [1, 2, 3, 4, 5]
+y = [2, 4, 6, 8, 10]
+
+plt.plot(x, y)
+plt.show() <span class="comment"># グラフ出現！</span></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Summary -->
+        <div class="slide">
+            <div class="header"><i class="fa-solid fa-flag-checkered"></i><h2>まとめ：Colabは現代の文房具</h2></div>
+            <div class="content">
+                <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 900px; margin: 0 auto;">
+                    <ul class="bullet-list" style="margin-bottom: 0;">
+                        <li style="font-size: 30px; margin-bottom: 30px;"><div><i class="fa-solid fa-check" style="color: var(--colab-orange); font-size: 34px;"></i></div><div><strong>面倒な準備ゼロ！</strong> ブラウザを開くだけでスタート。</div></li>
+                        <li style="font-size: 30px; margin-bottom: 30px;"><div><i class="fa-solid fa-check" style="color: var(--colab-orange); font-size: 34px;"></i></div><div><strong>枠（セル）に書いて再生ボタンを押すだけ。</strong></div></li>
+                        <li style="font-size: 30px; margin-bottom: 30px;"><div><i class="fa-solid fa-check" style="color: var(--colab-orange); font-size: 34px;"></i></div><div><strong>メモとコードを一緒に残せる。</strong></div></li>
+                        <li style="font-size: 30px; margin-bottom: 0;"><div><i class="fa-solid fa-check" style="color: var(--colab-orange); font-size: 34px;"></i></div><div><strong>計算やグラフ化は全部パソコンに丸投げ！</strong></div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: End -->
+        <div class="slide title-slide">
+            <h1 style="font-size: 60px;">さあ、Colabを開いてみよう！</h1>
+            <p style="color: var(--colab-orange); font-size: 32px; margin-top: 30px;">まずは「Google Colab」で検索！</p>
+        </div>
+
+    </div>
+
+    <!-- Navigation Controls -->
+    <div id="controls">
+        <button class="nav-btn" id="prev-btn"><i class="fa-solid fa-chevron-left"></i> 前へ</button>
+        
+        <!-- 中央にドットとページ番号の両方を表示 -->
+        <div style="display: flex; align-items: center; gap: 30px;">
+            <div class="nav-dots" id="dots-container"></div>
+            <div id="slide-counter" style="font-size: 20px; font-weight: bold; color: var(--colab-dark); font-family: 'Fira Code', monospace;">1 / 10</div>
+        </div>
+
+        <button class="nav-btn" id="next-btn">次へ <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+</div>
+
+<script>
+    const track = document.getElementById('slide-track');
+    const slides = document.querySelectorAll('.slide');
+    const wrapper = document.getElementById('presentation-wrapper');
+    const dotsContainer = document.getElementById('dots-container');
+    const slideCounter = document.getElementById('slide-counter');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    let currentSlide = 0;
+    const totalSlides = slides.length;
+
+    // 動的にページ番号とドットを生成
+    slides.forEach((slide, i) => {
+        // ドットの生成
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (i === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => goToSlide(i));
+        dotsContainer.appendChild(dot);
+
+        // スライド内の右下ページ番号の生成（印刷・画面共有用）
+        const pageNum = document.createElement('div');
+        pageNum.classList.add('slide-page-number');
+        pageNum.textContent = `${i + 1} / ${totalSlides}`;
+        slide.appendChild(pageNum);
+    });
+
+    const dots = document.querySelectorAll('.dot');
+
+    function updateScale() {
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        const scale = Math.min(winW / 1280, winH / 720) * 0.98;
+        wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    function goToSlide(index) {
+        if (index < 0 || index >= totalSlides) return;
+        currentSlide = index;
+        const movePercent = (currentSlide * (100 / totalSlides));
+        track.style.transform = `translateX(-${movePercent}%)`;
+        
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === currentSlide);
+        });
+
+        // 下部カウンターの更新
+        slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    }
+
+    function next() { goToSlide(currentSlide + 1); }
+    function prev() { goToSlide(currentSlide - 1); }
+
+    window.addEventListener('resize', updateScale);
+    updateScale();
+
+    document.body.addEventListener('click', (e) => {
+        if (!e.target.closest('#controls')) next();
+    });
+
+    prevBtn.addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault(); next();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault(); prev();
+        }
+    });
+</script>
+
+</body>
+</html>

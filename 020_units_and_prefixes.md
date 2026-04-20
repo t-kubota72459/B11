@@ -1,3 +1,28 @@
+<style>
+/* 1. 地の文章の中にあるコード（` `で囲った部分）の色を濃くする */
+code {
+    color: #C0392B !important; /* 濃いレンガ色 */
+    background-color: #f8f8f8;  /* 背景を少しグレーにするとさらに読みやすい */
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* 2. コードブロック（枠組み）の中の文字列も改めて指定 */
+code .highlight .s, 
+code .highlight .s1, 
+code .highlight .s2, 
+.hljs-string {
+    color: #C0392B !important;
+    font-weight: bold;
+}
+
+/* 3. コメントの色も視認性アップ */
+code .highlight .c1,
+.hljs-comment {
+    color: #2F4F4F !important;
+}
+</style>
 # 第2回 指数表記と変数：エンジニアの数値作法
 
 ## 今日のゴール

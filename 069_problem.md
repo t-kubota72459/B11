@@ -15,8 +15,35 @@
 * **構成**: セクション見出し（Markdown）を使って、第5回と第6回の内容を分かりやすく区別すること。
 
 ---
+## 【課題1】ベン図（第5回の復習）
 
-## 【課題1】品質管理とド・モルガンの法則（第5回の復習）
+授業で紹介した以下の例を参考に、おもしろい？ベン図を描いてください。
+
+```python
+from matplotlib import pyplot as plt
+from matplotlib_venn import venn3
+import japanize_matplotlib
+# ベン図の作成（サイズは適当な重なりを指定）
+v = venn3(subsets=(1, 1, 1, 1, 1, 1, 1),
+          set_labels=('給料が高い', '楽すぎる', 'やりがい'))  # 3 つの集合
+
+# 各領域のテキストを「あるある」で上書き
+v.get_label_by_id('100').set_text('激務\n(心折れる)')
+v.get_label_by_id('010').set_text('暇すぎて\n苦痛')
+v.get_label_by_id('001').set_text('ただの\nボランティア')
+
+v.get_label_by_id('110').set_text('闇バイト\n(絶対ダメ)') # 給料高×楽
+v.get_label_by_id('011').set_text('サークル活動')        # 楽×やりがい
+v.get_label_by_id('101').set_text('ベンチャー企業')      # 給料高×やりがい
+
+# 一番大事な「真ん中」
+v.get_label_by_id('111').set_text('存在しない\n(都市伝説)')
+
+plt.title("若者が直面する『仕事選び』の理想と現実")
+plt.show()
+```
+
+## 【課題2】品質管理とド・モルガンの法則（第5回の復習）
 
 工場で生産された5つの部品（`Part_A` 〜 `Part_E`）の検査を行います。
 出荷できる「合格品」の条件は、**「寸法が規格内である」 かつ 「表面に傷がない」** ことです。
